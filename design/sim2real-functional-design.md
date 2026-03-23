@@ -275,6 +275,46 @@ For v0.1, it should remain compact, but it must still model:
 - decisions
 - events
 
+### 11.1 Four change mechanisms
+
+Not every state variable should be driven in the same way.
+
+The design should distinguish four mechanisms:
+
+#### A. Deterministic accounting
+Use hard computation for things like:
+- revenue
+- cost
+- cash balance
+- gross profit
+- inventory movement
+
+#### B. Business constraints / harness rules
+Use deterministic domain constraints for things like:
+- reserve cash boundaries
+- shipping-mode consequences
+- inventory cannot go below zero
+- paused ads should stop paid traffic
+
+#### C. Bounded stochasticity with grounding
+Use grounded but uncertain updates for things like:
+- impressions / reach
+- CPC / traffic efficiency
+- creator/KOL performance
+- supply delay risk
+- trend-driven shifts
+
+This should not be pure random noise. It should be constrained by grounded priors and current world state.
+
+#### D. Agent judgment
+Use agent reasoning for things like:
+- intent decomposition
+- prioritization
+- strategy adaptation
+- explanation of tradeoffs
+
+This four-way distinction is critical. It prevents the system from collapsing into either a giant rules engine or unconstrained LLM improvisation.
+
 ---
 
 ## 12. Runtime model

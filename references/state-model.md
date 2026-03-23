@@ -147,6 +147,45 @@ For v0.1, the state should at least be able to support:
 
 If a field does not help one of those, it probably should not be added yet.
 
+## 9. How state should change
+
+The state should not be updated by a single generic mechanism.
+
+Use four categories of state change:
+
+### 9.1 Deterministic accounting
+Hard arithmetic for:
+- revenue
+- spend
+- balance
+- gross profit
+- inventory quantities
+
+### 9.2 Business constraints / harness rules
+Rule-bound updates for:
+- reserve cash
+- shipping consequences
+- paused ads
+- presale behavior
+- stock boundaries
+
+### 9.3 Grounded bounded uncertainty
+Semi-uncertain but constrained updates for:
+- reach/impressions
+- CPC / traffic cost movement
+- creator/KOL outcomes
+- delay risk
+- trend-sensitive performance
+
+### 9.4 Agent-driven judgment
+Judgment-heavy changes for:
+- strategy shifts
+- user-intent interpretation
+- prioritization and decomposition
+- explanation of why a decision is being made
+
+The implementation should preserve this distinction.
+
 ---
 
 ## 9. Persistence stance
