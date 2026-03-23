@@ -7,48 +7,32 @@ Date: 2026-03-23
 
 ## 1. Purpose
 
-This document defines the preferred first state shape for the current v0.1 / Layer 0 cut.
+This document defines the preferred first state shape for the agent-native commerce runtime.
 
-It answers:
-- what the simulator must remember between turns
-- what changes over time
-- what should be visible to the user through chat updates
-- what should remain simple enough for a fast first implementation
-
-This is a reference/state-shape document, not a full implementation spec.
+The state should not be viewed as only a bookkeeping ledger.
+It is the evolving commerce world the agents operate inside.
 
 ---
 
-## 2. Design stance
+## 2. State role in the architecture
 
-The current Layer 0 state model should optimize for:
-- chat-native simulation
-- one visible 30-day run
-- staged progress updates
-- user intervention between chunks
-- simple persistence
-- enough realism to avoid anti-common-sense outputs
+The state serves four purposes:
+- world continuity
+- commerce memory
+- grounding container
+- recap source
 
-It should **not** yet optimize for:
-- perfect domain completeness
-- full Live Mode reconciliation
-- deep branching history
-- heavy analytics warehousing
+Without stable state, the agent runtime degenerates into disconnected chat turns.
 
 ---
 
-## 3. State principles
+## 3. Design stance
 
-1. The state should be **small but sufficient**
-2. The state should support **pause / continue** in chat
-3. The state should separate:
-   - world setup
-   - changing business state
-   - logs/artifacts
-4. The state should make it easy to explain:
-   - what happened
-   - why it happened
-   - what changed after a user decision
+The state should be:
+- compact enough to implement quickly
+- rich enough to support causal continuity
+- structured enough for harness actions to update it predictably
+- readable enough for recap generation
 
 ---
 
@@ -57,6 +41,7 @@ It should **not** yet optimize for:
 ```yaml
 state:
   meta: {}
+  world_context: {}
   product: {}
   supply_chain: {}
   marketing: {}
@@ -65,211 +50,122 @@ state:
   market_data: {}
   decision_log: []
   events: []
+  artifacts: {}
 ```
-
-This top-level shape is intentionally aligned with the current OPC Layer 0 business framing.
 
 ---
 
-## 5. Top-level sections
+## 5. Core sections
 
-### 5.1 `meta`
+### `meta`
 Run/session metadata.
 
-Suggested fields:
+### `world_context`
+The grounded external world backdrop for this run.
+This should remain more stable than the fast-changing operational state.
 
-```yaml
-meta:
-  session_id: string
-  run_id: string
-  current_day: number
-  total_days: number
-  status: idle | running | paused | completed
-  seed: number | null
-  last_user_checkpoint_day: number | null
-```
-
-### 5.2 `product`
+### `product`
 What is being sold.
 
-Suggested fields:
+### `supply_chain`
+Inventory, supplier, shipping, and fulfillment state.
 
-```yaml
-product:
-  name: string
-  category: string
-  market_region: string
-  price: number
-  unit_cost: number
-  shipping_cost_sea: number | null
-  shipping_cost_air: number | null
-  mode: normal | presale | clearance
-  additional_skus: []
-```
+### `marketing`
+Channel budgets, campaigns, creative, creator/KOL work, and promotion-related state.
 
-### 5.3 `supply_chain`
-Inventory, supplier, and fulfillment state.
+### `brand`
+Brand style, PR-like initiatives, and higher-level brand signals.
 
-Suggested fields:
+### `finance`
+Cash, reserve, spend, revenue, profit, and risk signals.
 
-```yaml
-supply_chain:
-  supplier:
-    name: string
-    moq: number | null
-    unit_price: number
-  inventory:
-    in_stock: number
-    in_transit_sea: number
-    in_transit_air: number
-  fulfillment: self_ship | dropship | three_pl
-  reorder_point: number | null
-  next_arrivals: []
-```
+### `market_data`
+Grounded external market facts/signals currently relevant to the run.
 
-### 5.4 `marketing`
-Channel, campaign, creative, and creator/KOL state.
+### `decision_log`
+Structured record of major decisions and why they happened.
 
-Suggested fields:
+### `events`
+Structured record of shocks, exceptions, or notable stage changes.
 
-```yaml
-marketing:
-  channels: {}
-  total_daily_budget: number
-  ad_paused: boolean
-  organic_social: {}
-  kol_campaigns: []
-  ad_creatives: []
-  active_promotions: []
-```
-
-### 5.5 `brand`
-Brand-layer state.
-
-Suggested fields:
-
-```yaml
-brand:
-  brand_style: string | null
-  brand_story: string | null
-  pr_campaigns: []
-  brand_collabs: []
-  brand_awareness_score: number | null
-```
-
-### 5.6 `finance`
-Cash, spend, revenue, and summary financial state.
-
-Suggested fields:
-
-```yaml
-finance:
-  initial_budget: number
-  balance: number
-  reserved: number
-  total_revenue: number
-  total_cost: number
-  gross_profit: number | null
-  daily_log: []
-```
-
-### 5.7 `market_data`
-Reality-layer grounded fields used by the current run.
-
-Suggested fields:
-
-```yaml
-market_data:
-  trends_score: number | null
-  trends_direction: up | flat | down | null
-  trends_change_pct: number | null
-  seasonal_factor: number | null
-  related_rising_queries: []
-  top_regions: []
-  competitor_count: number | null
-  avg_competitor_price: number | null
-  last_refresh_day: number | null
-```
-
-### 5.8 `decision_log`
-Decision trace for recap and explanation.
-
-Suggested shape:
-
-```yaml
-decision_log:
-  - day: number
-    actor: string
-    action: string
-    detail: string
-    impact_summary: string | null
-```
-
-### 5.9 `events`
-Runtime events and shocks.
-
-Suggested shape:
-
-```yaml
-events:
-  - day: number
-    type: string
-    status: active | resolved
-    desc: string
-    impact_summary: string | null
-```
+### `artifacts`
+Pointers/metadata for user-facing outputs such as market snapshot, chunk summaries, and final battle report.
 
 ---
 
-## 6. What should NOT live in state yet
+## 6. Important design distinction
 
-The following should stay out of the first state model unless needed:
-- raw web research dumps
-- full prompt transcripts
-- heavyweight agent memory stores
-- full Live Mode external sync metadata
-- overly granular metrics that do not affect decisions
+### `world_context`
+Represents the business environment.
+Example:
+- category
+- channel conditions
+- competition pressure
+- customer expectations
 
-Those can live in artifacts or later versions.
+### operational state sections
+Represent what the business has done and what has happened so far.
+Example:
+- current budget split
+- current inventory level
+- current cash
+- creator campaign status
 
----
-
-## 7. Persistence recommendation
-
-For the current v0.1 cut, persistence should stay simple.
-
-Recommended pattern:
-- one latest state snapshot
-- optional periodic history snapshots
-- separate run artifacts for user-facing summaries
-
-This is enough to support:
-- pause / continue
-- recap
-- debugging
-- basic replayability
+This distinction matters for agent reasoning.
 
 ---
 
-## 8. User-visible implications
+## 7. State update model
 
-The state model should support generating:
-- market snapshots
-- 5-day progress updates
-- risk warnings
-- end-of-run recap / battle report
-- simple counterfactual recap
+State should not be mutated arbitrarily by agent prose.
 
-If a field does not help state progression, explanation, or recap, it probably does not belong in Layer 0 state.
+Preferred flow:
+
+```text
+agent reasoning
+-> structured action proposal
+-> commerce harness handler
+-> shadow effect application
+-> state update
+-> artifact/log update
+```
+
+So the state is primarily changed through structured harness-mediated updates.
 
 ---
 
-## 9. Summary
+## 8. Minimum Layer 0 coverage
 
-For the current MVP cut, the state model should behave like:
-- a save file
-- a business ledger
-- a lightweight reality cache
-- a recap source
+For v0.1, the state should at least be able to support:
+- market snapshot before the run
+- stage-by-stage continuity
+- budget and channel changes
+- price changes
+- inventory / shipping changes
+- creator/KOL campaign effects
+- warnings and recap
 
-It should be concrete enough to run a staged 30-day simulation, but small enough that implementation remains tractable.
+If a field does not help one of those, it probably should not be added yet.
+
+---
+
+## 9. Persistence stance
+
+Keep persistence simple in v0.1.
+
+Recommended:
+- latest state snapshot
+- stage/checkpoint snapshots if useful
+- separate artifacts directory for user-facing outputs
+
+No need for complex databases in the first cut.
+
+---
+
+## 10. Summary
+
+The state model should behave like:
+- a persistent commerce world
+- a memory substrate for agents
+- a grounding-aware shadow ledger
+- the source of recap and explanation

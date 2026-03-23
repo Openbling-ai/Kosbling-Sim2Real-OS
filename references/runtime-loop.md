@@ -7,202 +7,163 @@ Date: 2026-03-23
 
 ## 1. Purpose
 
-This document defines the preferred runtime rhythm for the current Layer 0 cut.
+This document defines the preferred runtime loop for the current system framing.
 
-It answers:
-- how a run begins
-- how the simulation advances
-- where the user can intervene
-- how chat-stage updates should map onto the underlying runtime
-
-This document is intentionally aligned with the current IM-native MVP direction.
+The runtime should be understood as:
+- an agent-native commerce runtime
+- currently operating in shadow mode
+- surfaced to the user through staged chat interaction
 
 ---
 
-## 2. Runtime stance
+## 2. Core runtime idea
 
-The first useful runtime is **not** a silent batch simulator.
+There are three coupled flows:
 
-It should behave like:
-- a staged simulation engine
-- surfaced through chat
-- with explicit pause points
-- with user-controlled continuation
+1. **user interaction flow**
+2. **agent decision flow**
+3. **world/state update flow**
 
-So there are really two coupled loops:
-- the **simulation loop**
-- the **chat interaction loop**
+A good runtime keeps these aligned.
 
 ---
 
-## 3. High-level flow
+## 3. External user flow
+
+The user-facing rhythm should be:
 
 ```text
 Idea Intake
--> Clarifying Questions
--> Reality / Market Snapshot
--> User chooses Start / Adjust / Switch
--> Staged Simulation Chunks
--> End-of-run Recap
--> User chooses what to do next
+-> Clarification if needed
+-> Market Snapshot
+-> Start / Adjust / Switch
+-> Day 1-5 update
+-> Pause
+-> Day 6-10 update
+-> Pause
+-> ...
+-> Final battle report
 ```
 
----
-
-## 4. Layer 0 run cadence
-
-Recommended first cadence:
-- 30 simulated days total
-- surfaced in 5-day chunks
-
-That means the user experience feels like:
-- Day 0: setup and market snapshot
-- Day 1-5: first staged result
-- Day 6-10: next staged result
-- ...
-- Day 26-30: final staged result
-- final recap
-
-This cadence can be adjusted later, but it is a strong first reference.
+The user should not need to use a formal control language.
+The CEO agent should interpret natural language adjustments.
 
 ---
 
-## 5. Step-level engine flow
+## 4. Internal runtime loop
 
-Underneath each staged chunk, the engine still needs a day-level loop.
+At a high level, each stage should do this:
 
-For each simulated day:
-1. load current state
-2. refresh lightweight market signals if needed
-3. inject relevant events or changes
-4. assemble current decision context
-5. generate agent/action proposals
-6. apply simple validation / guard checks
-7. simulate execution via mock adapter
-8. update state
-9. append logs / checkpoints
-
-This is the minimum useful engine skeleton.
+1. read current state
+2. refresh grounding if needed
+3. build current world/decision context
+4. let the CEO agent interpret user intent and coordinate downstream reasoning
+5. let role/domain logic produce structured action proposals
+6. send proposals through commerce harness handlers
+7. apply shadow effects to state
+8. record decisions, events, and artifacts
+9. emit the next staged chat update
 
 ---
 
-## 6. Chunk-level chat flow
+## 5. Day-level vs stage-level
 
-After each staged chunk, the system should produce a user-facing update.
+### Day-level
+Internally, the world may still advance one simulated day at a time.
 
-A good chunk update should include:
-- what happened in this period
-- key metrics or changes
-- emerging risk or tension
-- decision point(s) for the user
+### Stage-level
+Externally, the user should experience chunked updates.
 
-Example shape:
+Recommended v0.1 default:
+- total run = 30 days
+- stage size = 5 days
 
-```text
-Day 6-10
-- performance summary
-- inventory / supply warning if any
-- best/worst channel note
-- balance update
-- next decision options
-```
+This keeps the runtime interactive and understandable.
 
 ---
 
-## 7. Pause / continue rule
+## 6. CEO-driven interpretation
 
-This is a core rule, not a UI detail.
+The CEO agent should be the top-level semantic coordinator.
 
-The runtime should:
-- pause after each staged chunk
-- wait for explicit user continuation or adjustment
-- not auto-continue unless explicitly configured later
+Responsibilities include:
+- interpret user messages
+- determine whether clarification is needed
+- translate natural language adjustments into structured downstream actions
+- decide when to ask the user for a decision versus when to continue the staged plan
 
-This keeps the simulator interactive and boss-driven.
-
----
-
-## 8. Reality refresh rule
-
-Layer 0 should use lightweight reality refreshes.
-
-Recommended stance:
-- initial grounding before the run starts
-- periodic refresh at chunk boundaries or every few simulated days
-- no heavy real-time data pipeline in v0.1
-
-Google Trends can serve as the first hard anchor.
+This is a core runtime behavior, not just a UI flourish.
 
 ---
 
-## 9. Event model
+## 7. Commerce harness execution
 
-Events should stay minimal in Layer 0.
+The runtime should not let agents mutate raw state directly.
 
-Recommended event sources:
-- grounded market movement
-- scenario/scripted events
-- limited stochastic events
+Instead, structured proposals should be applied through a commerce harness layer.
 
 Examples:
+- marketing handlers
+- pricing handlers
+- supply handlers
+- promotion handlers
+- finance handlers
+
+These handlers are responsible for producing shadow-mode world changes.
+
+---
+
+## 8. Grounding refresh
+
+Grounding should stay lightweight but real.
+
+Recommended v0.1 approach:
+- initial grounding before first market snapshot
+- optional refresh at stage boundaries
+- Google Trends as first hard anchor
+- fixture/mock only for dev/test/degraded fallback
+
+---
+
+## 9. Event and shock model
+
+Events should remain minimal in Layer 0.
+
+Useful examples:
 - trend spike
 - supply delay
-- KOL hit
+- creator/KOL hit
 - creative fatigue
 - stockout risk
 
-The goal is useful realism, not event-system complexity.
+Events should help the world feel alive, but should not dominate the architecture.
 
 ---
 
-## 10. Terminal conditions
+## 10. Pause / continue rule
 
-A run should end when one of these is true:
-- planned duration is reached
-- user stops the run
-- business becomes non-viable under simple termination rules
-- system marks run completed for recap
+The runtime must pause after a staged update and wait for the user before proceeding further.
 
-The first MVP can keep this simple.
+This is one of the core product constraints.
 
 ---
 
-## 11. Outputs by stage
+## 11. Outputs
 
-### Before the run
+At minimum, the runtime should emit:
 - market snapshot
-- strategy framing summary
-- start / adjust / switch choice
+- staged updates
+- warnings / decision prompts
+- final battle report
 
-### During the run
-- staged chunk updates
-- warnings
-- decision options
-
-### End of run
-- recap / battle report
-- major decision review
-- simple counterfactuals if available
-- next choices
+These are not secondary artifacts. They are part of the product surface.
 
 ---
 
-## 12. What Layer 0 should avoid
+## 12. Summary
 
-The first runtime should avoid:
-- complicated approval trees
-- too many hidden substeps
-- auto-running long sequences without user control
-- deep asynchronous orchestration
-- mixing Live Mode concerns into the default Shadow runtime
-
----
-
-## 13. Summary
-
-The current preferred runtime is:
-- day-level internally
-- chunked/staged externally
-- chat-native in presentation
-- explicitly user-controlled
-- small enough to implement quickly
+The runtime should behave like:
+- an agent host for commerce work
+- a stateful shadow world
+- a staged chat-native operating loop
+- a bridge between agent decisions and commerce-world effects
