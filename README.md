@@ -28,6 +28,8 @@ Earlier split design drafts have been moved to `archive/design-drafts/` to avoid
 Supporting technical references that define schemas, contracts, subsystem behavior, and business-derived implementation references.
 Current recommended starting references are:
 - `references/commerce-harness.md` — the key middle layer between agent cognition and state/runtime internals
+- `references/action-spec.md` — canonical Layer 0 action vocabulary
+- `references/event-spec.md` — canonical Layer 0 event vocabulary
 - `references/opc-layer0-reference.md` — business-derived Layer 0 reference extracted from the MVP doc
 - `references/scenario-spec.md`
 - `references/state-model.md`
