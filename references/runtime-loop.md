@@ -61,8 +61,9 @@ At a high level, each stage should do this:
 5. let role/domain logic produce structured action proposals
 6. send proposals through commerce harness handlers
 7. apply shadow effects to state
-8. record decisions, events, and artifacts
-9. emit the next staged chat update
+8. generate candidate events with an LLM-first event step, then validate/canonicalize them lightly in runtime
+9. record decisions, events, and artifacts
+10. emit the next staged chat update
 
 ---
 

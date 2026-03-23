@@ -195,7 +195,18 @@ Common indirect effects:
 
 ---
 
-## 5. Event source rules
+## 5. Event generation stance
+
+Layer 0 should prefer **LLM-first event generation** over a thick hardcoded event-rules engine.
+
+Recommended pattern:
+- provide the LLM with current state, recent actions, grounding, stage/day, and the allowed canonical event types
+- let the LLM decide whether an event should occur and which canonical event type best fits
+- use a thin runtime validation/canonicalization layer to ensure the event shape is valid and bounded
+
+This keeps the system agent-native while avoiding uncontrolled event drift.
+
+## 6. Event source rules
 
 Layer 0 events should usually come from one of four sources:
 
@@ -213,7 +224,21 @@ Example: bounded uncertain disturbance such as delay risk materializing.
 
 ---
 
-## 6. Direct vs indirect event impact
+## 7. Thin runtime validation / canonicalization
+
+The runtime should validate and normalize LLM-proposed events with lightweight checks such as:
+- event type must be from the canonical Layer 0 list
+- payload shape must be structurally valid
+- severity must be low / medium / high
+- obviously impossible contradictions should be rejected or corrected
+- duplicate or over-frequent events may be suppressed
+
+The runtime should not replace the LLM with a thick event-rules engine.
+It should only keep the event stream coherent.
+
+---
+
+## 8. Direct vs indirect event impact
 
 Events, like actions, should not force every consequence into an immediate full-state rewrite.
 
@@ -227,7 +252,7 @@ This distinction keeps Layer 0 tractable.
 
 ---
 
-## 7. Event compression rule
+## 9. Event compression rule
 
 Many detailed real-world disturbances should be compressed into a small number of canonical event types.
 
@@ -240,7 +265,7 @@ This is deliberate.
 
 ---
 
-## 8. Summary
+## 10. Summary
 
 Layer 0 should use a small canonical event vocabulary.
 The goal is not to exhaustively simulate reality.
