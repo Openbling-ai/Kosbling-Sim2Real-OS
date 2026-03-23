@@ -34,6 +34,9 @@ The state should be:
 - structured enough for harness actions to update it predictably
 - readable enough for recap generation
 
+For Layer 0, the goal is **not** to model every conceivable business variable.
+The goal is to define a compact set of core variables that can support the staged shadow run.
+
 ---
 
 ## 4. Recommended top-level structure
@@ -65,19 +68,19 @@ The grounded external world backdrop for this run.
 This should remain more stable than the fast-changing operational state.
 
 ### `product`
-What is being sold.
+What is being sold and the few product variables that materially shape the run.
 
 ### `supply_chain`
 Inventory, supplier, shipping, and fulfillment state.
 
 ### `marketing`
-Channel budgets, campaigns, creative, creator/KOL work, and promotion-related state.
+Channel budgets, campaign posture, creator/KOL work, and creative/promotion state.
 
 ### `brand`
-Brand style, PR-like initiatives, and higher-level brand signals.
+Brand style and a small number of brand-level signals.
 
 ### `finance`
-Cash, reserve, spend, revenue, profit, and risk signals.
+Cash, reserve, spend, revenue, cost, and profit signals.
 
 ### `market_data`
 Grounded external market facts/signals currently relevant to the run.
@@ -98,10 +101,10 @@ Pointers/metadata for user-facing outputs such as market snapshot, chunk summari
 ### `world_context`
 Represents the business environment.
 Example:
-- category
-- channel conditions
-- competition pressure
+- category conditions
+- market posture
 - customer expectations
+- competition pressure
 
 ### operational state sections
 Represent what the business has done and what has happened so far.
@@ -109,13 +112,156 @@ Example:
 - current budget split
 - current inventory level
 - current cash
-- creator campaign status
+- current creator campaign status
 
 This distinction matters for agent reasoning.
 
 ---
 
-## 7. State update model
+## 7. Layer 0 core variables
+
+This section defines the **minimum canonical variable set** for Layer 0.
+
+These are the variables that should be treated as first-class state, not just informal hints.
+
+### 7.1 `meta`
+
+```yaml
+meta:
+  session_id: string
+  current_day: integer
+  status: running | paused | completed
+  seed: integer | null
+```
+
+### 7.2 `product`
+
+```yaml
+product:
+  name: string
+  category: string
+  price: number
+  unit_cost: number
+  mode: normal | presale | clearance
+```
+
+Optional but acceptable in Layer 0:
+- `shipping_cost_sea`
+- `shipping_cost_air`
+- `additional_skus`
+
+### 7.3 `supply_chain`
+
+```yaml
+supply_chain:
+  supplier_name: string | null
+  inventory_in_stock: integer
+  inventory_in_transit: integer
+  fulfillment_mode: self_ship | dropship | 3pl
+  shipping_mode: sea | air | mixed | null
+  reorder_point: integer
+  next_arrival_day: integer | null
+```
+
+### 7.4 `marketing`
+
+```yaml
+marketing:
+  total_daily_budget: number
+  channel_mix:
+    tiktok: number
+    facebook: number
+    other: number
+  ad_paused: boolean
+  primary_creative_style: string | null
+  creative_fatigue: number
+  active_kol_campaigns: integer
+  active_promotions: string[]
+  organic_posture: low | medium | high
+```
+
+Notes:
+- `channel_mix` values should normally sum to ~1.0
+- `creative_fatigue` can be a compressed score rather than a fully decomposed creative system
+- `active_kol_campaigns` is the Layer 0 compressed form; richer KOL objects can be added later
+
+### 7.5 `brand`
+
+```yaml
+brand:
+  brand_style: string | null
+  brand_awareness_score: number
+```
+
+Brand stays intentionally lightweight in Layer 0.
+
+### 7.6 `finance`
+
+```yaml
+finance:
+  initial_budget: number
+  balance: number
+  reserved_cash: number
+  total_revenue: number
+  total_cost: number
+  gross_profit: number
+```
+
+Optional but acceptable in Layer 0:
+- `daily_log`
+- `gross_margin_pct`
+
+### 7.7 `market_data`
+
+```yaml
+market_data:
+  trends_score: number | null
+  trends_direction: up | flat | down | null
+  seasonal_factor: number | null
+  competitor_count: integer | null
+  avg_competitor_price: number | null
+  top_regions: string[]
+  last_refresh_day: integer | null
+```
+
+### 7.8 `decision_log`
+
+Each entry should roughly support:
+
+```yaml
+- day: integer
+  actor: string
+  action: string
+  detail: string
+  impact_summary: string | null
+```
+
+### 7.9 `events`
+
+Each entry should roughly support:
+
+```yaml
+- day: integer
+  type: string
+  desc: string
+```
+
+---
+
+## 8. What is deliberately compressed in Layer 0
+
+To avoid state explosion, the following should usually stay compressed in the first cut:
+- detailed per-creative object graphs
+- detailed per-KOL performance trees
+- detailed supplier catalogs
+- full daily KPI breakdowns for every channel
+- large historical metric matrices
+
+These can appear later if needed.
+
+---
+
+## 9. State update model
 
 State should not be mutated arbitrarily by agent prose.
 
@@ -134,7 +280,7 @@ So the state is primarily changed through structured harness-mediated updates.
 
 ---
 
-## 8. Minimum Layer 0 coverage
+## 10. Minimum Layer 0 coverage
 
 For v0.1, the state should at least be able to support:
 - market snapshot before the run
@@ -147,13 +293,15 @@ For v0.1, the state should at least be able to support:
 
 If a field does not help one of those, it probably should not be added yet.
 
-## 9. How state should change
+---
+
+## 11. How state should change
 
 The state should not be updated by a single generic mechanism.
 
 Use four categories of state change:
 
-### 9.1 Deterministic accounting
+### 11.1 Deterministic accounting
 Hard arithmetic for:
 - revenue
 - spend
@@ -161,7 +309,7 @@ Hard arithmetic for:
 - gross profit
 - inventory quantities
 
-### 9.2 Business constraints / harness rules
+### 11.2 Business constraints / harness rules
 Rule-bound updates for:
 - reserve cash
 - shipping consequences
@@ -169,7 +317,7 @@ Rule-bound updates for:
 - presale behavior
 - stock boundaries
 
-### 9.3 Grounded bounded uncertainty
+### 11.3 Grounded bounded uncertainty
 Semi-uncertain but constrained updates for:
 - reach/impressions
 - CPC / traffic cost movement
@@ -177,7 +325,7 @@ Semi-uncertain but constrained updates for:
 - delay risk
 - trend-sensitive performance
 
-### 9.4 Agent-driven judgment
+### 11.4 Agent-driven judgment
 Judgment-heavy changes for:
 - strategy shifts
 - user-intent interpretation
@@ -188,7 +336,7 @@ The implementation should preserve this distinction.
 
 ---
 
-## 9. Persistence stance
+## 12. Persistence stance
 
 Keep persistence simple in v0.1.
 
@@ -201,10 +349,14 @@ No need for complex databases in the first cut.
 
 ---
 
-## 10. Summary
+## 13. Summary
 
 The state model should behave like:
 - a persistent commerce world
 - a memory substrate for agents
 - a grounding-aware shadow ledger
 - the source of recap and explanation
+
+And for Layer 0 specifically, it should prioritize:
+- a **small canonical core variable set**
+- not a fully expanded business world model
