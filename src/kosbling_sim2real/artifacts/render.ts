@@ -1,5 +1,6 @@
-import type { RolePlan } from "../agent_runtime/contracts.js";
+import type { RolePlan, RoleRunRecord } from "../agent_runtime/contracts.js";
 import type { ActionProposal, ChunkUpdateArtifact, ExecutionResult, FinalBattleReportArtifact, MarketSnapshotArtifact } from "../domain.js";
+import type { HandoffStatus } from "../agent_runtime/contracts.js";
 import { getI18n } from "../i18n.js";
 
 export function renderMarketSnapshot(artifact: MarketSnapshotArtifact, locale = "en-US"): string {
@@ -71,24 +72,32 @@ export function renderTeamTrace(params: {
   chunkNumber: number;
   bossMessage: string;
   rolePlans: RolePlan[];
+  roleRuns?: RoleRunRecord[];
   actionSummary: string;
   mergeRationale: string;
   actions: ActionProposal[];
   executionSummary: string;
   executionActionIds: string[];
   executionResults: ExecutionResult[];
+  openHandoffs: HandoffStatus[];
   locale?: string;
 }): string {
   const zh = (params.locale ?? "en-US").toLowerCase().startsWith("zh");
   const rolePlans = params.rolePlans.length > 0
     ? params.rolePlans.flatMap((plan) => renderRolePlan(plan, zh))
     : [zh ? "- 本阶段没有角色提案。" : "- No role proposals were recorded for this chunk."];
+  const roleRuns = params.roleRuns && params.roleRuns.length > 0
+    ? params.roleRuns.map((run) => renderRoleRun(run, zh))
+    : [zh ? "- 没有角色执行日志。" : "- No role execution logs were recorded."];
   const approvedActions = params.actions.length > 0
     ? params.actions.map((action) => `- \`${action.action_type}\` [${action.domain}] ${action.reason}${renderPayloadSuffix(action.payload)}`)
     : [zh ? "- 无批准动作。" : "- No approved actions."];
   const executionResults = params.executionResults.length > 0
     ? params.executionResults.map((result) => `- \`${result.status}\` ${result.summary}`)
     : [zh ? "- 无执行结果。" : "- No execution results."];
+  const openHandoffs = params.openHandoffs.length > 0
+    ? params.openHandoffs.map((handoff) => renderHandoffStatus(handoff, zh))
+    : [zh ? "- 无未完成交接。" : "- No open handoffs."];
 
   return [
     `# ${zh ? `第 ${params.chunkNumber} 段团队协作记录` : `Chunk ${params.chunkNumber} team trace`}`,
@@ -97,6 +106,9 @@ export function renderTeamTrace(params: {
     "",
     `## ${zh ? "角色提案" : "Role proposals"}`,
     ...rolePlans,
+    "",
+    `## ${zh ? "角色执行日志" : "Role execution log"}`,
+    ...roleRuns,
     "",
     `## ${zh ? "CEO 合并结果" : "CEO merge"}`,
     `${zh ? "行动摘要" : "Action summary"}: ${params.actionSummary}`,
@@ -111,6 +123,9 @@ export function renderTeamTrace(params: {
     "",
     `${zh ? "执行结果" : "Execution results"}:`,
     ...executionResults,
+    "",
+    `${zh ? "未完成交接" : "Open handoffs"}:`,
+    ...openHandoffs,
   ].join("\n");
 }
 
@@ -125,16 +140,39 @@ function renderRolePlan(plan: RolePlan, zh: boolean): string[] {
   const watchouts = plan.watchouts.length > 0
     ? plan.watchouts.map((item) => `- ${item}`)
     : [zh ? "- 无额外提醒。" : "- No additional watchouts."];
+  const handoffs = plan.handoffs.length > 0
+    ? [
+      `${zh ? "发起交接" : "New handoffs"}:`,
+      ...plan.handoffs.map((handoff) => `- \`${handoff.handoffId}\` ${handoff.fromRole} -> ${handoff.toRole}: ${handoff.note}`),
+    ]
+    : [`${zh ? "发起交接" : "New handoffs"}: ${zh ? "无" : "none"}`];
+  const resolutions = plan.resolvedHandoffIds.length > 0
+    ? [`${zh ? "本轮回执" : "Resolved handoffs"}: ${plan.resolvedHandoffIds.join(", ")}`]
+    : [`${zh ? "本轮回执" : "Resolved handoffs"}: ${zh ? "无" : "none"}`];
 
   return [
     `### ${plan.roleLabel} (\`${plan.role}\`)`,
     `${zh ? "摘要" : "Summary"}: ${plan.summary}`,
     `${zh ? "提醒" : "Watchouts"}:`,
     ...watchouts,
+    ...handoffs,
+    ...resolutions,
     `${zh ? "建议动作" : "Suggested actions"}:`,
     ...actions,
     "",
   ];
+}
+
+function renderRoleRun(run: RoleRunRecord, zh: boolean): string {
+  const status = run.status === "failed"
+    ? (zh ? "失败" : "failed")
+    : (zh ? "成功" : "success");
+  const details = run.status === "failed"
+    ? (run.errorMessage ?? (zh ? "未知错误" : "unknown error"))
+    : `${run.actionCount} actions, ${run.watchoutCount} watchouts, ${run.handoffCount} handoffs`;
+  return zh
+    ? `- \`${run.roleLabel}\` (\`${run.role}\`) ${status} | ${details}`
+    : `- \`${run.roleLabel}\` (\`${run.role}\`) ${status} | ${details}`;
 }
 
 function renderPayloadSuffix(payload: unknown): string {
@@ -148,4 +186,14 @@ function renderPayloadSuffix(payload: unknown): string {
   }
 
   return ` ${JSON.stringify(payloadRecord)}`;
+}
+
+function renderHandoffStatus(handoff: HandoffStatus, zh: boolean): string {
+  const status = handoff.isStale
+    ? (zh ? "stale 升级" : "stale escalation")
+    : (zh ? "active" : "active");
+  const age = zh ? `${handoff.ageInChunks} 段未回执` : `${handoff.ageInChunks} chunk(s) open`;
+  return zh
+    ? `- \`${handoff.handoffId}\` ${status} | ${age} | 优先级 ${handoff.priority} | ${handoff.fromRole} -> ${handoff.toRole}: ${handoff.note}`
+    : `- \`${handoff.handoffId}\` ${status} | ${age} | priority ${handoff.priority} | ${handoff.fromRole} -> ${handoff.toRole}: ${handoff.note}`;
 }

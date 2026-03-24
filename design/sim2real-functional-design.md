@@ -138,7 +138,7 @@ This layer maintains:
 
 ### 6.5 Provider / execution layer
 This layer interacts with:
-- grounding providers (for example Google Trends)
+- grounding providers (for example Brave web search, and optionally Google Trends)
 - future live providers
 - current shadow execution handlers
 
@@ -266,7 +266,8 @@ The system should perform realism checks and warnings, but not silently rewrite 
 The product should assume **real networked grounding by default**.
 
 For v0.1, the first hard anchor should be:
-- Google Trends
+- Brave web search as the default grounding source
+- Google Trends as optional enrichment when available
 
 `web_search` or similar web-assisted grounding may be used where useful, but should remain lightweight.
 

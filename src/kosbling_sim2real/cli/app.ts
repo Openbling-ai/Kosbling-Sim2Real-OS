@@ -3,6 +3,7 @@ import { createInterface } from "node:readline/promises";
 import { stdin as input, stdout as output } from "node:process";
 
 import { createPiRuntimeContext } from "../agent_runtime/pi.js";
+import { buildOpenHandoffs, buildRecentTeamMemory } from "../agent_runtime/team-memory.js";
 import { createDefaultActionOrchestrator } from "../agent_runtime/team.js";
 import { ExecutionAgent } from "../agent_runtime/executor.js";
 import type { AppConfig } from "../config.js";
@@ -52,6 +53,7 @@ async function startNewRun(params: {
   console.log("");
 
   const idea = await ask(params.rl, t.ideaPrompt);
+  console.log(t.logScenarioIntake);
   const scenario = await buildScenarioFromIdea({
     ceo,
     idea,
@@ -128,6 +130,7 @@ async function startNewRun(params: {
     state: activeState,
     runId,
     chunkHistory: [],
+    launchFromSnapshot: true,
   });
 }
 
@@ -166,6 +169,7 @@ async function continueRunLoop(params: {
   state: CommerceWorldState;
   runId: string;
   chunkHistory: ChunkExecution[];
+  launchFromSnapshot?: boolean;
 }): Promise<void> {
   const { ceo, orchestrator } = createDefaultActionOrchestrator(params.config, params.runtime);
   const executionAgent = new ExecutionAgent(params.config, params.runtime, createExecutionAdapter(params.config));
@@ -178,13 +182,16 @@ async function continueRunLoop(params: {
       params.state.meta.current_day + params.scenario.simulation.chunk_days,
     );
     const chunkNumber = params.chunkHistory.length + 1;
+    console.log(t.logChunkStart(chunkNumber, stageStartDay, stageEndDay));
 
-    const bossMessage = await ask(
-      params.rl,
-      stageStartDay === 1
-        ? t.firstChunkPrompt
-        : t.nextChunkPrompt(stageStartDay, stageEndDay),
-    );
+    const bossMessage = shouldAutoStartFirstChunk(params, stageStartDay)
+      ? ""
+      : await ask(
+        params.rl,
+        stageStartDay === 1
+          ? t.firstChunkPrompt
+          : t.nextChunkPrompt(stageStartDay, stageEndDay),
+      );
 
     if (isExitCommand(bossMessage)) {
       params.state.meta.status = "paused";
@@ -200,19 +207,41 @@ async function continueRunLoop(params: {
     }
 
     const normalizedBossMessage = normalizeBossMessage(bossMessage, stageStartDay, params.config.locale);
+    const openHandoffs = buildOpenHandoffs(params.chunkHistory, chunkNumber);
+    const recentTeamMemory = buildRecentTeamMemory({
+      chunkHistory: params.chunkHistory,
+      locale: params.config.locale,
+      openHandoffs,
+    });
+    console.log(t.logPlanningStart);
     const actionPlan = await orchestrator.proposeActions({
       state: params.state,
       bossMessage: normalizedBossMessage,
       stageStartDay,
       stageEndDay,
+      recentTeamMemory,
+      openHandoffs,
+      onRoleStart: (role) => {
+        console.log(t.logRoleStart(role.label));
+      },
+      onRoleDone: (plan) => {
+        console.log(t.logRoleDone(plan.roleLabel, plan.actions.length, plan.watchouts.length, plan.handoffs.length));
+      },
+      onRoleError: (role, error) => {
+        console.log(t.logRoleFailed(role.label, error.message));
+      },
     });
+    console.log(t.logPlanningDone(actionPlan.rolePlans.length, actionPlan.actions.length));
+    console.log(t.logExecutionStart(actionPlan.actions.length));
     const execution = await executionAgent.executeApprovedActions({
       state: params.state,
       actions: actionPlan.actions,
       currentDay: params.state.meta.current_day,
       bossMessage: normalizedBossMessage,
     });
+    console.log(t.logExecutionDone(execution.results.length));
 
+    console.log(t.logEventsStart);
     const eventPlan = await ceo.generateEvents({
       state: params.state,
       actionSummary: `${actionPlan.summary} ${execution.summary}`.trim(),
@@ -220,12 +249,15 @@ async function continueRunLoop(params: {
       stageEndDay,
     });
     applyEventsToState(params.state, eventPlan.events);
+    console.log(t.logEventsDone(eventPlan.events.length));
 
+    console.log(t.logSettlementStart);
     const outcome = executeStage({
       state: params.state,
       stageStartDay,
       stageEndDay,
     });
+    console.log(t.logSettlementDone(outcome.orders, outcome.revenue));
 
     const artifact = createChunkArtifact({
       chunkNumber,
@@ -260,12 +292,14 @@ async function continueRunLoop(params: {
       chunkNumber,
       bossMessage: normalizedBossMessage,
       rolePlans: actionPlan.rolePlans,
+      roleRuns: actionPlan.roleRuns,
       actionSummary: actionPlan.summary,
       mergeRationale: actionPlan.rationale,
       actions: actionPlan.actions,
       executionSummary: execution.summary,
       executionActionIds: execution.actionIds,
       executionResults: execution.results,
+      openHandoffs,
       locale: params.config.locale,
     });
 
@@ -282,6 +316,7 @@ async function continueRunLoop(params: {
       markdown,
     );
     saveArtifactMarkdown(params.config.runsDir, params.runId, `chunk-${String(chunkNumber).padStart(2, "0")}-team-trace.md`, teamTraceMarkdown);
+    console.log(t.logArtifactsDone(chunkNumber));
 
     console.log("");
     console.log(markdown);
@@ -289,6 +324,7 @@ async function continueRunLoop(params: {
   }
 
   params.state.meta.status = "completed";
+  console.log(t.logFinalizing);
   const finalArtifact = createFinalArtifact({
     state: params.state,
     chunkHistory: params.chunkHistory,
@@ -347,6 +383,20 @@ function persistRun(config: AppConfig, run: PersistedRun, artifactFile: string, 
   saveArtifactMarkdown(config.runsDir, run.runId, artifactFile, artifactMarkdown);
 }
 
+export function shouldAutoStartFirstChunk(
+  params: {
+    launchFromSnapshot?: boolean;
+    state: CommerceWorldState;
+    chunkHistory: ChunkExecution[];
+  },
+  stageStartDay: number,
+): boolean {
+  return Boolean(params.launchFromSnapshot)
+    && params.state.meta.current_day === 0
+    && params.chunkHistory.length === 0
+    && stageStartDay === 1;
+}
+
 async function prepareScenarioRun(params: {
   config: AppConfig;
   groundingProvider: GoogleTrendsGroundingProvider;
@@ -359,7 +409,10 @@ async function prepareScenarioRun(params: {
   snapshotMarkdown: string;
   run: PersistedRun;
 }> {
+  const t = getI18n(params.config.locale);
+  console.log(t.logGroundingStart);
   const grounding = await params.groundingProvider.groundScenario(params.scenario);
+  console.log(t.logGroundingDone(grounding.source));
   const state = createInitialWorldState({
     sessionId: randomUUID(),
     scenarioId: params.scenario.id,

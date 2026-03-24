@@ -42,6 +42,19 @@ export class GoogleTrendsGroundingProvider {
     }
 
     const braveSnapshot = await this.buildWebContext(query);
+    if (!this.config.enableGoogleTrends) {
+      if (braveSnapshot) {
+        const braveOnly = createBraveOnlySnapshot({
+          query,
+          geo,
+          braveSnapshot,
+        });
+        this.writeCache(query, geo, braveOnly);
+        return braveOnly;
+      }
+      throw new GroundingError("No grounding source is available. Configure Brave web search, or explicitly enable Google Trends best-effort grounding.");
+    }
+
     let interest;
     try {
       interest = await trends.getInterestOverTime({
@@ -172,7 +185,7 @@ function delay(ms: number): Promise<void> {
 function toGroundingMessage(error: unknown): string {
   const message = error instanceof Error ? error.message : String(error);
   if (message.includes("429")) {
-    return "Google Trends grounding is currently rate-limited (HTTP 429). Wait a bit and retry, or reuse a recent cached result.";
+    return "Google Trends grounding is currently rate-limited (HTTP 429). Treat it as optional enrichment, or retry later if you explicitly enabled it.";
   }
   return `Google Trends grounding failed: ${message}`;
 }

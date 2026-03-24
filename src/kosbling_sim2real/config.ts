@@ -6,6 +6,7 @@ export interface AppConfig {
   runsDir: string;
   locale: string;
   defaultGeo: string;
+  enableGoogleTrends: boolean;
   executionMode: "shadow" | "live";
   shopify?: {
     storeDomain: string;
@@ -33,6 +34,7 @@ export function loadConfig(cwd = process.cwd()): AppConfig {
     runsDir,
     locale: process.env.KOSBLING_LOCALE ?? "en-US",
     defaultGeo: process.env.KOSBLING_DEFAULT_GEO ?? "US",
+    enableGoogleTrends: process.env.KOSBLING_ENABLE_GOOGLE_TRENDS === "true",
     executionMode: process.env.KOSBLING_EXECUTION_MODE === "live" ? "live" : "shadow",
     ...(shopify ? { shopify } : {}),
     ...(process.env.KOSBLING_MODEL_PROVIDER ? { provider: process.env.KOSBLING_MODEL_PROVIDER } : {}),

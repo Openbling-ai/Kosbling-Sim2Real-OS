@@ -2,6 +2,7 @@ export * from "./agent_runtime/ceo.js";
 export * from "./agent_runtime/domain-agent.js";
 export * from "./agent_runtime/executor.js";
 export * from "./agent_runtime/pi.js";
+export * from "./agent_runtime/team-memory.js";
 export * from "./agent_runtime/team.js";
 export * from "./artifacts/render.js";
 export * from "./config.js";

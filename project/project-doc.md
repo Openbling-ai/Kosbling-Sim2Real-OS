@@ -472,6 +472,11 @@ Should show:
 - event log
 - leaderboard / scenario outcomes
 
+Current next-step note:
+- the preferred next implementation is a **Web Observatory** focused on run replay, team collaboration visibility, and chunk-level causality rather than a generic KPI dashboard
+- see `design/web-observatory-design.md`
+- see `implementation/web-ui-v0.1-brief.md`
+
 #### C. Audit log
 
 Each run should output a markdown report containing:

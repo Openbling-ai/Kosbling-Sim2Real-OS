@@ -11,7 +11,8 @@ import {
 } from "../domain.js";
 import { createDefaultScenario, normalizeChannelMix, validateActionProposal, validateEventEntry, validateScenario } from "../helpers.js";
 import { getI18n } from "../i18n.js";
-import type { RolePlan } from "./contracts.js";
+import type { HandoffStatus, RolePlan } from "./contracts.js";
+import { summarizeOpenHandoffs, summarizeStaleHandoffs } from "./team-memory.js";
 import { runPiToolSession, Type, type PiRuntimeContext, type ToolDefinition } from "./pi.js";
 
 type ScenarioCapture =
@@ -343,6 +344,8 @@ export class CEOAgent {
     bossMessage: string;
     stageStartDay: number;
     stageEndDay: number;
+    recentTeamMemory: string;
+    openHandoffs: HandoffStatus[];
     rolePlans: RolePlan[];
   }): Promise<{ summary: string; rationale: string; actions: ActionProposal[] }> {
     const t = getI18n(this.config.locale);
@@ -387,6 +390,8 @@ export class CEOAgent {
         "你必须综合 marketing、supply、finance 等角色的建议，生成一组最终的 Layer 0 commerce harness 行动。",
         "如果角色之间冲突，优先保证计划可执行、现金安全、库存连续性。",
         "不要机械拼接所有提案，必须做取舍、去重、压缩。",
+        "认真阅读 watchouts、handoffs 和未完成交接，把跨角色依赖纳入你的裁决。",
+        "如果存在 stale 交接，你必须在 rationale 中明确提到它们，并把它们提升到更高的风险优先级。",
         "除了 summary 之外，还要给出 rationale，解释你为什么保留、压缩或放弃某些角色建议。",
         "summary、reason、expected_effect 请使用简体中文，但 canonical 的 action_type/domain 枚举值必须保持英文。",
       ].join("\n")
@@ -395,6 +400,8 @@ export class CEOAgent {
         "You must synthesize marketing, supply, and finance proposals into one final Layer 0 commerce harness plan.",
         "If roles conflict, prioritize executable plans, cash safety, and inventory continuity.",
         "Do not mechanically concatenate every proposal; compress, deduplicate, and choose.",
+        "Read role watchouts, handoffs, and open handoff tickets carefully and factor those cross-role dependencies into your arbitration.",
+        "If there are stale handoffs, you must explicitly mention them in the rationale and raise their risk priority above fresh suggestions.",
         "In addition to the final summary, return a rationale explaining why some role ideas were kept, compressed, or dropped.",
         "Write summary, reason, and expected_effect in English, but keep canonical action_type/domain enums in English exactly as specified.",
       ].join("\n");
@@ -412,6 +419,15 @@ export class CEOAgent {
         finance: params.state.finance,
         market_data: params.state.market_data,
       }, null, 2),
+      "",
+      this.config.locale.startsWith("zh") ? "最近团队记忆：" : "Recent team memory:",
+      params.recentTeamMemory,
+      "",
+      this.config.locale.startsWith("zh") ? "当前未完成交接：" : "Open handoffs:",
+      summarizeOpenHandoffs({ openHandoffs: params.openHandoffs, locale: this.config.locale }),
+      "",
+      this.config.locale.startsWith("zh") ? "需要优先升级的 stale 交接：" : "Stale handoffs requiring priority:",
+      summarizeStaleHandoffs({ openHandoffs: params.openHandoffs, locale: this.config.locale }),
       "",
       this.config.locale.startsWith("zh") ? "各角色提案：" : "Role proposals:",
       JSON.stringify(params.rolePlans, null, 2),

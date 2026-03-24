@@ -57,6 +57,7 @@ test("LiveCommerceExecutionAdapter throws until real provider adapters are bound
     runsDir: "/tmp/kosbling-live-adapter/runs",
     locale: "en-US",
     defaultGeo: "US",
+    enableGoogleTrends: false,
     executionMode: "live",
   });
 

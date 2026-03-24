@@ -13,6 +13,7 @@ test("loadConfig reads env overrides", () => {
       BRAVE_WEBSEARCH_API_KEY: "brave",
       KOSBLING_LOCALE: "en-US",
       KOSBLING_DEFAULT_GEO: "US",
+      KOSBLING_ENABLE_GOOGLE_TRENDS: "true",
     },
     () => {
       const config = loadConfig("/tmp/kosbling-config-test");
@@ -24,6 +25,17 @@ test("loadConfig reads env overrides", () => {
       assert.equal(config.braveSearchApiKey, "brave");
       assert.equal(config.locale, "en-US");
       assert.equal(config.defaultGeo, "US");
+      assert.equal(config.enableGoogleTrends, true);
+    },
+  );
+});
+
+test("loadConfig keeps Google Trends disabled by default", () => {
+  withEnv(
+    {},
+    () => {
+      const config = loadConfig("/tmp/kosbling-config-test-defaults");
+      assert.equal(config.enableGoogleTrends, false);
     },
   );
 });
@@ -66,6 +78,7 @@ function withEnv(overrides: Record<string, string>, fn: () => void): void {
     "BRAVE_WEBSEARCH_API_KEY",
     "KOSBLING_LOCALE",
     "KOSBLING_DEFAULT_GEO",
+    "KOSBLING_ENABLE_GOOGLE_TRENDS",
     "KOSBLING_EXECUTION_MODE",
     "KOSBLING_SHOPIFY_STORE_DOMAIN",
     "KOSBLING_SHOPIFY_ACCESS_TOKEN",

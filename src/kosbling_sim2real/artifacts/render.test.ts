@@ -87,6 +87,15 @@ test("renderTeamTrace includes Chinese role collaboration labels", () => {
         roleLabel: "增长与投放",
         summary: "先用小预算试水。",
         watchouts: ["创意疲劳还不高，但不要过早扩量。"],
+        handoffs: [
+          {
+            handoffId: "handoff-marketing-1-1",
+            fromRole: "marketing",
+            toRole: "finance",
+            note: "请财务继续盯住测试预算。",
+          },
+        ],
+        resolvedHandoffIds: [],
         actions: [
           {
             action_type: "set_total_budget",
@@ -96,6 +105,29 @@ test("renderTeamTrace includes Chinese role collaboration labels", () => {
             payload: { total_daily_budget: 60 },
           },
         ],
+      },
+    ],
+    roleRuns: [
+      {
+        role: "marketing",
+        roleLabel: "增长与投放",
+        status: "success",
+        summary: "Marketing wants a cautious launch.",
+        actionCount: 1,
+        watchoutCount: 1,
+        handoffCount: 1,
+        resolvedHandoffCount: 0,
+      },
+      {
+        role: "finance",
+        roleLabel: "财务护栏",
+        status: "failed",
+        summary: "",
+        actionCount: 0,
+        watchoutCount: 0,
+        handoffCount: 0,
+        resolvedHandoffCount: 0,
+        errorMessage: "Finance tool JSON was invalid.",
       },
     ],
     actionSummary: "Kos 选择先保守投放。",
@@ -127,6 +159,20 @@ test("renderTeamTrace includes Chinese role collaboration labels", () => {
         external_refs: [],
       },
     ],
+    openHandoffs: [
+      {
+        handoffId: "handoff-marketing-1-1",
+        fromRole: "marketing",
+        toRole: "finance",
+        note: "请财务继续盯住测试预算。",
+        createdChunkNumber: 1,
+        createdStageStartDay: 1,
+        createdStageEndDay: 5,
+        ageInChunks: 3,
+        priority: "stale",
+        isStale: true,
+      },
+    ],
     locale: "zh-CN",
   });
 
@@ -134,4 +180,6 @@ test("renderTeamTrace includes Chinese role collaboration labels", () => {
   assert.equal(markdown.includes("角色提案"), true);
   assert.equal(markdown.includes("CEO 合并结果"), true);
   assert.equal(markdown.includes("执行器结果"), true);
+  assert.equal(markdown.includes("角色执行日志"), true);
+  assert.equal(markdown.includes("未完成交接"), true);
 });

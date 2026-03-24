@@ -5,6 +5,7 @@ Kosbling Sim2Real OS is now a CLI-first, shadow-first TypeScript runtime for run
 If you want the implementation contract, start here:
 
 - [`implementation/v0.1-codex-implementation-brief.md`](./implementation/v0.1-codex-implementation-brief.md)
+- [`implementation/v0.2-implementation-brief.md`](./implementation/v0.2-implementation-brief.md)
 
 ## What is implemented in v0.1
 
@@ -14,12 +15,19 @@ The current build is a local CLI with:
 - CEO-agent scenario formation
 - multi-agent chunk planning with CEO + marketing + supply + finance + brand role proposals
 - execution-agent mediated action commits through a shared adapter boundary
-- Google Trends grounding
-- Brave web search enrichment
+- Brave web search grounding
+- optional Google Trends enrichment
 - 30-day shadow execution in 5-day chunks
 - optional Shopify live execution for price updates
 - pause and resume support
+- coarse CLI process logs for grounding, planning, execution, and settlement
 - market snapshot, chunk update, and final battle report artifacts
+
+Current v0.1 boundary:
+
+- v0.1 is best treated as a post-setup operating simulator
+- it initializes a shadow store/world quickly from the idea and defaults
+- the fuller “from supplier selection and launch prep to first sale” setup journey is now planned for v0.2
 
 There is still no GUI, IM integration, or full live ads / ops surface in this version. The first live write path is a minimal Shopify store adapter for approved price updates.
 
@@ -30,7 +38,9 @@ The current v0.1 runtime now uses:
 - `Kos / CEO` for idea intake, clarification, role-plan merge, and event generation
 - specialist role agents for `marketing`, `supply`, `finance`, and `brand`
 - an execution agent that calls the runtime adapter through tool use
-- a sequential orchestration loop where specialists propose structured actions plus watchouts, the CEO merges them with a rationale, and the execution agent commits them through the active adapter
+- a sequential orchestration loop where specialists propose structured actions plus watchouts and handoff tickets, the CEO merges them with a rationale, and the execution agent commits them through the active adapter
+- recent chunk history is compressed into team memory and fed back into the next round of role planning and CEO arbitration
+- open handoffs can stay active across chunks until the assigned role explicitly acknowledges them
 
 This is still a local shadow runtime by default.
 The execution boundary is now adapter-based:
@@ -84,8 +94,9 @@ Optional grounding defaults:
 
 - `KOSBLING_LOCALE` defaults to `en-US`
 - `KOSBLING_DEFAULT_GEO` defaults to `US`
+- `KOSBLING_ENABLE_GOOGLE_TRENDS` defaults to `false`; enable it only as best-effort enrichment
 - `KOSBLING_EXECUTION_MODE` defaults to `shadow` and may be set to `live` when a real adapter is configured
-- `BRAVE_WEBSEARCH_API_KEY` enables lightweight web-search enrichment in grounding
+- `BRAVE_WEBSEARCH_API_KEY` is the primary real grounding source in the current v0.1 build
 
 Shopify live adapter env vars:
 
@@ -111,6 +122,7 @@ export KOSBLING_MODEL_ID=claude-sonnet-4-20250514
 export KOSBLING_MODEL_BASE_URL=https://your-gateway.example.com
 export ANTHROPIC_API_KEY=your_key_here
 export BRAVE_WEBSEARCH_API_KEY=your_brave_key_here
+export KOSBLING_ENABLE_GOOGLE_TRENDS=false
 export KOSBLING_EXECUTION_MODE=live
 export KOSBLING_SHOPIFY_STORE_DOMAIN=example.myshopify.com
 export KOSBLING_SHOPIFY_ACCESS_TOKEN=shpat_xxx
@@ -119,6 +131,12 @@ export KOSBLING_SHOPIFY_VARIANT_ID=gid://shopify/ProductVariant/456
 ```
 
 If you do not set the `KOSBLING_*` vars, the app will still try to use whatever tool-capable model is available through `pi` auth/model discovery.
+
+Grounding note:
+
+- current recommended path: Brave-backed grounding
+- Google Trends is no longer treated as a required hard anchor in the runtime because anonymous access is unstable and often returns `429`
+- if you explicitly set `KOSBLING_ENABLE_GOOGLE_TRENDS=true`, the app will try Trends as optional enrichment and fall back to Brave-only grounding when it is rate-limited
 
 ## Start A New Run
 
@@ -177,6 +195,10 @@ Each run writes its state and artifacts into `runs/<run-id>/`, including:
 Repository docs are still the best place to understand the architecture and the intended product shape:
 
 - [`design/sim2real-functional-design.md`](./design/sim2real-functional-design.md)
+- [`design/web-observatory-design.md`](./design/web-observatory-design.md)
+- [`implementation/v0.1-development-status-2026-03-24.md`](./implementation/v0.1-development-status-2026-03-24.md)
+- [`implementation/v0.2-implementation-brief.md`](./implementation/v0.2-implementation-brief.md)
+- [`implementation/web-ui-v0.1-brief.md`](./implementation/web-ui-v0.1-brief.md)
 - [`references/runtime-loop.md`](./references/runtime-loop.md)
 - [`references/state-model.md`](./references/state-model.md)
 - [`references/action-spec.md`](./references/action-spec.md)

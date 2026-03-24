@@ -66,6 +66,16 @@ At a high level, each stage should do this:
 10. record role plans, execution results, events, and artifacts
 11. emit the next staged chat update
 
+The CLI/TUI should not make this loop feel fully opaque while it runs.
+At minimum, it should print coarse process logs for:
+- intake / clarification
+- grounding
+- planning / merge
+- execution
+- event generation
+- settlement
+- artifact write-out
+
 ---
 
 ## 5. Day-level vs stage-level
@@ -126,6 +136,8 @@ The current runtime also benefits from preserving a readable execution trace:
 - what order the execution agent used
 - what results came back from execution
 
+The live terminal experience should expose a coarse-grained version of this trace during execution, not only after the chunk artifact is written.
+
 ---
 
 ## 8. Grounding refresh
@@ -135,7 +147,8 @@ Grounding should stay lightweight but real.
 Recommended v0.1 approach:
 - initial grounding before first market snapshot
 - optional refresh at stage boundaries
-- Google Trends as first hard anchor
+- Brave-backed grounding as the primary hard anchor
+- Google Trends as optional best-effort enrichment
 - fixture/mock only for dev/test/degraded fallback
 
 ---

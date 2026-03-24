@@ -35,7 +35,7 @@ export class BraveSearchProvider {
     url.searchParams.set("q", query);
     url.searchParams.set("count", "5");
     url.searchParams.set("freshness", freshness);
-    url.searchParams.set("search_lang", languageFromLocale(this.config.locale));
+    url.searchParams.set("search_lang", languageFromLocale(this.config.locale, this.config.defaultGeo));
     url.searchParams.set("country", this.config.defaultGeo);
     url.searchParams.set("extra_snippets", "true");
 
@@ -68,7 +68,10 @@ export class BraveSearchProvider {
   }
 }
 
-function languageFromLocale(locale: string): string {
+function languageFromLocale(locale: string, country: string): string {
+  if (["US", "CA", "GB", "AU", "NZ"].includes(country.toUpperCase())) {
+    return "en";
+  }
   const [language] = locale.split("-");
   return language || "en";
 }
