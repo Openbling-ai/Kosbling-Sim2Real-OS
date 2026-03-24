@@ -23,6 +23,26 @@ Another outward-facing description:
 
 > **Kosbling: The Open-Source E-commerce Agent Sandbox. Paper-trade your business ideas with real-world data, then deploy the winning agents to reality with one click.**
 
+### 1.1 Current v0.1 implementation status
+
+The codebase currently implements a **bounded v0.1 slice**, not the full long-term vision described later in this document.
+
+Current implemented shape:
+- CLI-first, local-first runtime
+- shadow-first execution by default
+- CEO + specialist role agents for marketing / supply / finance / brand
+- execution agent that commits approved actions through an adapter boundary
+- lightweight real grounding via Google Trends and Brave web search
+- 30-day run in 5-day chunks with pause / resume
+- market snapshot, chunk updates, final battle report, and per-chunk team trace artifacts
+
+Current non-goals for this phase:
+- full live commerce operations
+- broad Shopify / Meta / payments / email write coverage
+- GUI / IM product surfaces
+
+So when this document discusses full Sim2Real deployment, treat that as the **product direction**, while the repository today should be read as the **Layer 0 / v0.1 implementation** of that direction.
+
 ---
 
 ## 2. Core Product Thesis

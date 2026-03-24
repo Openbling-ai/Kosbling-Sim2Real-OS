@@ -1,7 +1,7 @@
 # Kosbling Sim2Real OS — Runtime Loop
 
 Status: Current reference for v0.1 / Layer 0  
-Date: 2026-03-23
+Date: 2026-03-24
 
 ---
 
@@ -58,12 +58,12 @@ At a high level, each stage should do this:
 2. refresh grounding if needed
 3. build current world/decision context
 4. let the CEO agent interpret user intent and coordinate downstream reasoning
-5. let role/domain logic produce structured action proposals
-6. merge / approve the proposed action bundle
-7. let an execution agent commit approved actions through the active adapter
+5. let role/domain logic produce structured action proposals plus concise watchouts
+6. merge / approve the proposed action bundle and record the CEO merge rationale
+7. let an execution agent commit approved actions through the active adapter in an explicit execution order
 8. let the shadow harness or future live provider layer apply the effects
 9. generate candidate events with an LLM-first event step, then validate/canonicalize them lightly in runtime
-10. record decisions, execution results, events, and artifacts
+10. record role plans, execution results, events, and artifacts
 11. emit the next staged chat update
 
 ---
@@ -119,6 +119,13 @@ Examples:
 
 In v0.1, these handlers are usually invoked through the `shadow` adapter and are responsible for producing shadow-mode world changes.
 
+The current runtime also benefits from preserving a readable execution trace:
+- which roles proposed what
+- which watchouts they raised
+- how the CEO compressed or rejected competing ideas
+- what order the execution agent used
+- what results came back from execution
+
 ---
 
 ## 8. Grounding refresh
@@ -161,6 +168,7 @@ This is one of the core product constraints.
 At minimum, the runtime should emit:
 - market snapshot
 - staged updates
+- per-chunk team trace / collaboration log
 - warnings / decision prompts
 - final battle report
 

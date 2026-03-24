@@ -1,7 +1,7 @@
 # Kosbling Sim2Real OS — Artifact Contract
 
 Status: Current reference for v0.1 / Layer 0  
-Date: 2026-03-23
+Date: 2026-03-24
 
 ---
 
@@ -22,6 +22,9 @@ Layer 0 should support at least:
 - final battle report
 
 Optional later artifacts can exist, but these three are the minimum product surface.
+
+Current implementation note:
+- a per-chunk `team trace` markdown artifact may also be emitted to show role proposals, CEO merge rationale, execution order, and execution results
 
 ---
 
@@ -64,6 +67,26 @@ Strongly recommended:
 - best-performing channel
 - best-performing creative
 - one-sentence explanation from CEO / team voice
+
+Current implementation note:
+- the chunk update may be accompanied by a separate team trace artifact so the main boss-facing update stays concise
+
+## 4.1 Team trace artifact
+
+Purpose:
+- make multi-agent collaboration observable
+- help the boss or developer understand why a chunk plan was chosen
+- surface execution ordering and execution results without overloading the main chunk update
+
+Recommended content:
+- boss message for the chunk
+- role-by-role summaries
+- role watchouts / constraints
+- final CEO merge summary
+- CEO merge rationale
+- approved actions
+- execution order
+- execution results
 
 ---
 
