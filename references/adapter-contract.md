@@ -9,7 +9,7 @@ Date: 2026-03-23
 
 This document defines the structured boundary between:
 - agent reasoning
-- commerce harness execution
+- execution-agent / adapter execution
 - world/state update
 
 It is not just an adapter contract in the generic sense.
@@ -21,12 +21,12 @@ It is the action surface through which the agent runtime affects the commerce wo
 
 Agents should not directly manipulate raw implementation details.
 
-Instead, they should emit structured proposals that the commerce harness can apply.
+Instead, planner agents should emit structured proposals, and execution agents should commit approved actions through the active adapter.
 
 So the action contract is really the bridge between:
 - semantic business reasoning
 - domain-specific commerce actions
-- shadow execution effects
+- adapter-backed execution effects
 
 ---
 
@@ -54,6 +54,10 @@ In v0.1, proposals may come from:
 - domain role wrappers
 - internal domain reasoning steps coordinated by CEO
 
+Approved execution may come from:
+- an execution agent operating in `shadow` mode
+- a future execution agent operating in `live` mode through the same action surface
+
 The important thing is not the exact orchestration topology.
 The important thing is that downstream execution receives structured proposals.
 
@@ -80,20 +84,26 @@ This is the beginning of the commerce harness surface.
 
 ---
 
-## 6. Commerce harness interpretation
+## 6. Execution interpretation
 
-Each action type should be handled by a domain-aware shadow handler.
+Each approved action type should be committed through the active adapter.
+
+In `shadow` mode, the adapter may call a domain-aware shadow handler.
+In `live` mode, the adapter may route into real provider writes.
 
 Examples:
 - marketing handler
 - supply handler
 - finance handler
 - brand handler
+- future Shopify / ads / ops adapters
 
-The harness layer translates:
-- proposal intent
+The execution boundary translates:
+- approved proposal intent
 into
 - shadow effects on the commerce world
+or
+- future live operational writes
 
 ---
 
@@ -105,13 +115,13 @@ After an action is applied, the runtime should produce a structured result.
 execution_id: string
 action_id: string
 status: proposed | completed | failed
-mode: shadow
+mode: shadow | live
 summary: string
 applied_effects: []
 external_refs: []
 ```
 
-In v0.1, `mode` should almost always be `shadow`.
+In v0.1, `mode` will usually be `shadow`, though a narrow `live` path may exist for provider-backed actions such as basic store writes.
 
 ---
 
@@ -133,5 +143,5 @@ or
 
 The action contract should be treated as:
 - the structured output of agent cognition
-- the input to the commerce harness
-- the bridge into shadow execution
+- the input to the execution agent + adapter layer
+- the bridge into shadow or live execution

@@ -1,1 +1,17 @@
 .DS_Store
+dist
+node_modules
+coverage
+.env
+.env.*
+.cache
+.pi
+.kosbling-auth.json
+.kosbling-models.json
+.tmp-auth.json
+.tmp-models.json
+runs
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*

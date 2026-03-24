@@ -59,11 +59,12 @@ At a high level, each stage should do this:
 3. build current world/decision context
 4. let the CEO agent interpret user intent and coordinate downstream reasoning
 5. let role/domain logic produce structured action proposals
-6. send proposals through commerce harness handlers
-7. apply shadow effects to state
-8. generate candidate events with an LLM-first event step, then validate/canonicalize them lightly in runtime
-9. record decisions, events, and artifacts
-10. emit the next staged chat update
+6. merge / approve the proposed action bundle
+7. let an execution agent commit approved actions through the active adapter
+8. let the shadow harness or future live provider layer apply the effects
+9. generate candidate events with an LLM-first event step, then validate/canonicalize them lightly in runtime
+10. record decisions, execution results, events, and artifacts
+11. emit the next staged chat update
 
 ---
 
@@ -97,11 +98,16 @@ This is a core runtime behavior, not just a UI flourish.
 
 ---
 
-## 7. Commerce harness execution
+## 7. Execution boundary
 
 The runtime should not let agents mutate raw state directly.
 
-Instead, structured proposals should be applied through a commerce harness layer.
+Instead, structured proposals should move through:
+- planner agents
+- a merge/approval step
+- an execution agent
+- the active adapter
+- the commerce harness or live provider layer
 
 Examples:
 - marketing handlers
@@ -109,8 +115,9 @@ Examples:
 - supply handlers
 - promotion handlers
 - finance handlers
+- future Shopify / ads / ops adapters
 
-These handlers are responsible for producing shadow-mode world changes.
+In v0.1, these handlers are usually invoked through the `shadow` adapter and are responsible for producing shadow-mode world changes.
 
 ---
 

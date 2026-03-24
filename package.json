@@ -1,0 +1,27 @@
+{
+  "name": "kosbling-sim2real-os",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Kosbling Sim2Real OS CLI-first TypeScript scaffold.",
+  "type": "module",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsx src/cli.ts",
+    "start": "node dist/cli.js",
+    "test": "node --import tsx --test src/kosbling_sim2real/*.test.ts src/kosbling_sim2real/**/*.test.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@mariozechner/pi-ai": "^0.62.0",
+    "@mariozechner/pi-coding-agent": "^0.62.0",
+    "google-trends-api-client": "^1.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.3",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3"
+  }
+}

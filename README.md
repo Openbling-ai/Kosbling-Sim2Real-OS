@@ -1,65 +1,184 @@
-# Kosbling Sim2Real OS Docs
+# Kosbling Sim2Real OS
 
-## Canonical implementation doc
+Kosbling Sim2Real OS is now a CLI-first, shadow-first TypeScript runtime for running commerce ideas through a staged 30-day simulation.
 
-If the goal is implementation, start here:
+If you want the implementation contract, start here:
 
-- `implementation/v0.1-codex-implementation-brief.md`
+- [`implementation/v0.1-codex-implementation-brief.md`](./implementation/v0.1-codex-implementation-brief.md)
 
-This is the single implementation source of truth for the current v0.1 shadow-only build.
+## What is implemented in v0.1
 
-## Directory roles
+The current build is a local CLI with:
 
-### `project/`
-Project background, product definition, and high-level requirement context.
-These explain what the project is, why it exists, and what shape it is trying to reach.
-Current project-layer docs are centered on:
-- `project/project-doc.md`
-- `project/plain-english.md`
-- `project/opc-mvp-business-version-2026-03-23.md` — latest business-side MVP framing for the IM-native OPC cut; use as product input/reference when aligning design and implementation scope. Note: this is a business/product doc, not a literal implementation plan; OpenClaw's existing IM/channel layer remains the assumed transport.
+- natural-language idea intake
+- CEO-agent scenario formation
+- multi-agent chunk planning with CEO + marketing + supply + finance + brand role proposals
+- execution-agent mediated action commits through a shared adapter boundary
+- Google Trends grounding
+- Brave web search enrichment
+- 30-day shadow execution in 5-day chunks
+- optional Shopify live execution for price updates
+- pause and resume support
+- market snapshot, chunk update, and final battle report artifacts
 
-### `design/`
-Functional design docs. The canonical design-layer document is:
-- `design/sim2real-functional-design.md`
+There is still no GUI, IM integration, or full live ads / ops surface in this version. The first live write path is a minimal Shopify store adapter for approved price updates.
 
-Earlier split design drafts have been moved to `archive/design-drafts/` to avoid drift.
+## Multi-Agent Runtime
 
-### `references/`
-Supporting technical references that define schemas, contracts, subsystem behavior, and business-derived implementation references.
-Current recommended starting references are:
-- `references/commerce-harness.md` — the key middle layer between agent cognition and state/runtime internals
-- `references/action-spec.md` — canonical Layer 0 action vocabulary
-- `references/event-spec.md` — canonical Layer 0 event vocabulary
-- `references/performance-rollout.md` — how a stage turns state/actions/events/grounding into business outcomes
-- `references/derived-metrics.md` — which business metrics should remain derived rather than canonical state
-- `references/artifact-contract.md` — minimum boss-facing artifact outputs
-- `references/opc-layer0-reference.md` — business-derived Layer 0 reference extracted from the MVP doc
-- `references/scenario-spec.md`
-- `references/state-model.md`
-- `references/runtime-loop.md`
-- `references/adapter-contract.md`
-- `references/ice-bath-na-v1.yaml.md` — example scenario, not a canonical product requirement
+The current v0.1 runtime now uses:
 
-### `archive/`
-Older planning / exploration / intermediate docs kept for historical context only.
-Not the default starting point for implementation work.
-Also includes superseded references such as:
-- `archive/references-superseded/live-state-sync.md`
+- `Kos / CEO` for idea intake, clarification, role-plan merge, and event generation
+- specialist role agents for `marketing`, `supply`, `finance`, and `brand`
+- an execution agent that calls the runtime adapter through tool use
+- a sequential orchestration loop where specialists propose structured actions plus watchouts, the CEO merges them with a rationale, and the execution agent commits them through the active adapter
 
-### `implementation/`
-Current execution-facing implementation docs.
+This is still a local shadow runtime by default.
+The execution boundary is now adapter-based:
 
-## Archive usage rule
+- `shadow` mode routes approved actions into the shadow commerce harness
+- `live` mode currently supports a first Shopify store adapter for `adjust_price`
+- unsupported live actions fail explicitly instead of silently falling back to fake execution
 
-If `archive/` differs from `implementation/` or `references/`, treat `implementation/` and `references/` as canonical for current v0.1 work.
+## Setup
 
-## Terminology
+Install dependencies:
 
-| Term | Meaning |
-|------|---------|
-| Scenario | The machine-readable starting setup for a business simulation |
-| State Model | The persistent world state / ledger that changes over time |
-| Shadow Mode | Simulated execution with fake money and no real external writes |
-| Live Mode | Future real execution mode with real external effects |
-| Action Intent | Structured business action proposed by an agent |
-| Execution Result | Structured adapter output describing what actually happened |
+```bash
+npm install
+```
+
+Bootstrap local env vars if you want to pin a model gateway:
+
+```bash
+cp .env.example .env
+```
+
+Run the CLI:
+
+```bash
+npm run dev
+```
+
+Optional build and typecheck commands:
+
+```bash
+npm run build
+npm run typecheck
+```
+
+## Model And Provider Setup
+
+The CLI uses `pi`-based agent runtime support. It can work with a provider configured through `pi` auth, or through explicit env vars in this repo.
+
+Required when you want to force a specific provider/model from the shell:
+
+- `KOSBLING_MODEL_PROVIDER`
+- `KOSBLING_MODEL_ID`
+
+Optional runtime API key override:
+
+- `KOSBLING_MODEL_API_KEY`
+- `KOSBLING_MODEL_BASE_URL` for Anthropic/OpenAI/Google-compatible gateways or proxies
+
+Optional grounding defaults:
+
+- `KOSBLING_LOCALE` defaults to `en-US`
+- `KOSBLING_DEFAULT_GEO` defaults to `US`
+- `KOSBLING_EXECUTION_MODE` defaults to `shadow` and may be set to `live` when a real adapter is configured
+- `BRAVE_WEBSEARCH_API_KEY` enables lightweight web-search enrichment in grounding
+
+Shopify live adapter env vars:
+
+- `KOSBLING_SHOPIFY_STORE_DOMAIN`
+- `KOSBLING_SHOPIFY_ACCESS_TOKEN`
+- `KOSBLING_SHOPIFY_API_VERSION` defaults to `2025-10`
+- `KOSBLING_SHOPIFY_PRODUCT_ID`
+- `KOSBLING_SHOPIFY_VARIANT_ID`
+- `KOSBLING_SHOPIFY_INVENTORY_ITEM_ID` optional, reserved for later inventory adapter work
+- `KOSBLING_SHOPIFY_LOCATION_ID` optional, reserved for later inventory adapter work
+
+CLI localization:
+
+- `KOSBLING_LOCALE=zh-CN` gives Chinese CLI prompts and artifact labels
+- `KOSBLING_LOCALE=en-US` gives English CLI prompts and artifact labels
+- command words accept both English and Chinese aliases such as `start` / `开始`, `continue` / `继续`, `pause` / `暂停`
+
+Example:
+
+```bash
+export KOSBLING_MODEL_PROVIDER=anthropic
+export KOSBLING_MODEL_ID=claude-sonnet-4-20250514
+export KOSBLING_MODEL_BASE_URL=https://your-gateway.example.com
+export ANTHROPIC_API_KEY=your_key_here
+export BRAVE_WEBSEARCH_API_KEY=your_brave_key_here
+export KOSBLING_EXECUTION_MODE=live
+export KOSBLING_SHOPIFY_STORE_DOMAIN=example.myshopify.com
+export KOSBLING_SHOPIFY_ACCESS_TOKEN=shpat_xxx
+export KOSBLING_SHOPIFY_PRODUCT_ID=gid://shopify/Product/123
+export KOSBLING_SHOPIFY_VARIANT_ID=gid://shopify/ProductVariant/456
+```
+
+If you do not set the `KOSBLING_*` vars, the app will still try to use whatever tool-capable model is available through `pi` auth/model discovery.
+
+## Start A New Run
+
+Launch the CLI with:
+
+```bash
+npm run dev
+```
+
+Then:
+
+1. Enter your product/business idea.
+2. Answer any clarification question from Kos if needed.
+3. Review the generated market snapshot.
+4. Type a natural-language adjustment or `start` to continue into the next chunk.
+
+Each run advances in 5-day chunks until day 30 completes.
+
+## Pause And Resume
+
+You can pause a run from the prompt by typing:
+
+```text
+pause
+```
+
+The run state is saved under `runs/<run-id>/`.
+
+Resume a paused run with:
+
+```bash
+npm run dev -- --resume <run-id>
+```
+
+Example:
+
+```bash
+npm run dev -- --resume run-2026-03-23T12-00-00-000Z
+```
+
+## Outputs
+
+Each run writes its state and artifacts into `runs/<run-id>/`, including:
+
+- `scenario.json`
+- `grounding.json`
+- `state.json`
+- `chunks.json`
+- `market-snapshot.md`
+- `chunk-XX.md`
+- `chunk-XX-team-trace.md`
+- `final-battle-report.md`
+
+## Reference Docs
+
+Repository docs are still the best place to understand the architecture and the intended product shape:
+
+- [`design/sim2real-functional-design.md`](./design/sim2real-functional-design.md)
+- [`references/runtime-loop.md`](./references/runtime-loop.md)
+- [`references/state-model.md`](./references/state-model.md)
+- [`references/action-spec.md`](./references/action-spec.md)
+- [`references/event-spec.md`](./references/event-spec.md)
+- [`references/artifact-contract.md`](./references/artifact-contract.md)

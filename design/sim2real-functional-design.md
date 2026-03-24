@@ -108,6 +108,10 @@ At the top sits the CEO agent (`Kos`), which:
 - translates user adjustments into structured downstream actions
 - reports back to the user
 
+Below the CEO, the system may include:
+- specialist planning agents for marketing / supply / finance / brand
+- execution agents that actually commit approved actions through the active adapter
+
 ### 6.3 Commerce harness layer
 This is the key middle layer.
 
@@ -120,6 +124,8 @@ It exposes e-commerce-specific actions/tools such as:
 - brand actions
 
 Agents should operate this layer, not raw engineering internals.
+
+The harness remains the domain action surface, but approved actions may now be committed through an execution agent before the harness or live provider adapter applies them.
 
 ### 6.4 Runtime / world layer
 This layer maintains:
@@ -135,6 +141,12 @@ This layer interacts with:
 - grounding providers (for example Google Trends)
 - future live providers
 - current shadow execution handlers
+
+The execution boundary should be adapter-backed:
+- a `shadow` adapter for simulated commerce effects
+- a `live` adapter for real commerce writes later
+
+The agent logic should stay as stable as possible while the adapter underneath changes.
 
 ---
 
@@ -157,6 +169,10 @@ Structured action proposed by an agent.
 
 ### 7.6 `execution_result`
 Structured result after the runtime applies that action.
+
+This result may come from:
+- a shadow adapter + commerce harness path
+- a future live adapter + provider write path
 
 ### 7.7 `artifact`
 User-facing and machine-readable outputs such as snapshots, chunk updates, and final recap.
@@ -189,6 +205,9 @@ At the internal layer, the first implementation may use fewer enduring execution
 
 This is acceptable.
 
+However, `shadow-first` should not be interpreted as `planner-only`.
+Agents may still participate in execution, as long as the execution boundary is routed through the active adapter rather than through raw state mutation.
+
 ### 8.3 No separate user DSL required
 The user should not need to learn a formal adjustment language.
 
@@ -219,6 +238,12 @@ Instead of having agents manipulate raw state directly, the system should expose
 - change shipping mode
 - switch to presale
 - set cash reserve
+
+The preferred path is:
+- planner agents propose structured actions
+- the CEO merges and approves them
+- an execution agent commits them through the active adapter
+- the shadow harness or live provider layer applies the effects
 
 This layer is what makes the system feel like a real commerce runtime rather than a generic chat system.
 
@@ -329,7 +354,9 @@ Internally, the runtime should:
 2. refresh grounded signals if needed
 3. let agents reason
 4. collect structured proposals
-5. apply shadow execution through the commerce harness
+5. merge and approve the proposals
+6. commit approved actions through an execution agent and adapter
+7. apply shadow or live effects through the active execution boundary
 6. update state
 7. generate artifacts
 
@@ -352,13 +379,19 @@ The user must remain in control of progression.
 In v0.1, shadow mode is the real target.
 
 In shadow mode:
-- agents operate the commerce harness
-- actions produce simulated/shadow effects
+- agents operate through the same execution surface they will later use in live mode
+- approved actions are committed through an execution agent
+- the active adapter routes them into simulated/shadow effects
 - state evolves as if the business were running
 - recap and learning are the goal
 
 ### 13.2 Live mode
 Live mode is future-facing.
+
+In live mode:
+- the same planning and execution agent logic may remain in place
+- the active adapter changes from `shadow` to `live`
+- approved actions route into real provider writes with stronger guardrails and approvals
 
 It should remain outside the main v0.1 build, except for clean boundary stubs if useful.
 
@@ -369,7 +402,7 @@ It should remain outside the main v0.1 build, except for clean boundary stubs if
 The first useful cut should be:
 - chat-native
 - local-first
-- shadow-only
+- shadow-first
 - agent-native
 - lightly grounded
 - stateful
