@@ -23,7 +23,7 @@ The goal is to ship a strong first observer UI, not a complete operations platfo
 
 ## 2. One-line goal
 
-> Build a local-first Web Observatory that visualizes Kosbling runs, team collaboration, chunk-level causality, and business outcomes using existing run artifacts.
+> Build a local-first Web Observatory that gives the user a CEO-level view of the whole store while still allowing drill-down into team collaboration, phase transitions, chunk causality, and business outcomes.
 
 ---
 
@@ -33,7 +33,8 @@ The first UI should be:
 - read-only by default
 - artifact-backed
 - desktop-first
-- replay-oriented
+- CEO-cockpit-first
+- replay-oriented as a secondary drill-down
 - local-first
 
 It should **not** depend on rewriting the runtime.
@@ -111,22 +112,38 @@ No websocket requirement in the first cut.
    - scenario name
    - status
    - mode
+   - current phase
    - day progress
    - top-line KPIs
 
-2. **Chunk timeline rail**
+2. **Store operating cockpit**
+   - product / offer posture
+   - sourcing / supplier posture
+   - storefront readiness
+   - launch assets readiness
+   - finance and inventory posture
+   - blockers / accepted risks
+
+3. **Phase + chunk timeline rail**
+   - setup milestones
+   - launch gate
    - chunk list
    - selected chunk
    - event/risk markers
 
-3. **Main replay panel**
-   - boss message
+4. **CEO decision panel**
+   - launch decision posture
    - CEO summary
    - CEO rationale
+   - blocker acceptance / delay reasons
+
+5. **Main replay panel**
+   - boss message
+   - merged decision
    - events
    - chunk outcome
 
-4. **Team panel**
+6. **Team panel**
    - role summaries
    - role watchouts
    - handoff tickets
@@ -134,7 +151,7 @@ No websocket requirement in the first cut.
    - execution order
    - execution results
 
-5. **Metrics panel**
+7. **Metrics panel**
    - balance
    - revenue
    - cost
@@ -142,8 +159,10 @@ No websocket requirement in the first cut.
    - orders
    - inventory
 
-6. **Artifact drawer**
+8. **Artifact drawer**
    - snapshot markdown
+   - setup markdown
+   - readiness markdown
    - chunk markdown
    - team trace markdown
    - final report markdown
@@ -159,6 +178,7 @@ The server adapter should normalize raw artifacts into UI-friendly shapes.
 - `scenarioName`
 - `status`
 - `mode`
+- `currentPhase`
 - `currentDay`
 - `startingBudget`
 - `currentBalance`
@@ -166,6 +186,18 @@ The server adapter should normalize raw artifacts into UI-friendly shapes.
 - `totalCost`
 - `grossProfit`
 - `totalOrders`
+- `launchReadiness`
+- `topBlockers[]`
+- `acceptedRisks[]`
+
+### Store cockpit block
+- `productSelection`
+- `supplierProfile`
+- `inventoryPlan`
+- `storefront`
+- `launchAssets`
+- `launchReadiness`
+- `financeHealth`
 
 ### Chunk summary
 - `chunkNumber`
@@ -237,16 +269,18 @@ This is guidance, not a rigid requirement.
 
 The page should prioritize, in this order:
 
-1. run identity and overall outcome
-2. chunk timeline and navigation
-3. team collaboration and merge logic
-4. business metrics
-5. raw artifact access
+1. CEO-level understanding of the store as a whole
+2. launch readiness and top business risks
+3. team collaboration and CEO merge logic
+4. timeline / chunk navigation
+5. business metrics
+6. raw artifact access
 
 Do not bury the team layer under charts.
+Do not bury the whole-store operating picture under chunk logs.
 
 Kosbling’s differentiator is not just the metrics.
-It is the visible collaboration and causality.
+It is the visible collaboration, causality, and the feeling that the user can oversee the entire store like a CEO.
 
 ---
 
@@ -272,6 +306,8 @@ It is the visible collaboration and causality.
 ### Phase 1 — Read-only observatory
 - run list
 - run detail
+- store operating cockpit
+- CEO decision panel
 - chunk timeline
 - team trace panel
 - metrics charts
@@ -312,10 +348,11 @@ The first implementation is successful if:
 
 1. it can render existing CLI-generated runs without changing runtime output format
 2. a user can inspect runs and navigate chunks visually
-3. role proposals, handoffs, merge rationale, and execution results are visible
-4. balance, revenue, gross profit, orders, and inventory trends are visible
-5. markdown artifacts remain accessible
-6. the UI feels like a simulation observatory, not a generic admin panel
+3. a user can understand whole-store posture before reading chunk details
+4. role proposals, handoffs, merge rationale, and execution results are visible
+5. balance, revenue, gross profit, orders, and inventory trends are visible
+6. markdown artifacts remain accessible
+7. the UI feels like a simulation observatory and CEO cockpit, not a generic admin panel
 
 ---
 
@@ -336,4 +373,4 @@ The first Web UI should not try to do everything.
 
 It should do one thing very well:
 
-> make the Kosbling runtime visible, understandable, and replayable.
+> make the Kosbling runtime visible, understandable, CEO-readable, and replayable.
